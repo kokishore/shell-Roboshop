@@ -59,13 +59,13 @@ cd /app
 
 rm -rf /app/* 
 
-unzip /tmp/catalogue.zip
+unzip /tmp/catalogue.zip  &>>$LOGS_FILE
 VALIDATE $? " Unzipping the catalogue"
 
-npm install 
+npm install   &>>$LOGS_FILE
 VALIDATE $? "Node JS Build Tool NPM Installation"
 
-cp $SCRIPT_DIR/catalogue.service /etc/systemd/system/catalogue.service
+cp $SCRIPT_DIR/catalogue.service /etc/systemd/system/catalogue.service  &>>$LOGS_FILE
 VALIDATE $? "Copying the catalogue service file "
 
 systemctl daemon-reload
@@ -74,13 +74,13 @@ systemctl start catalogue
 
 VALIDATE $? "catalogue service enabling and starting"
 
-cp $SCRIPT_DIR/mongo.repo /etc/yum.repos.d/mongo.repo 
+cp $SCRIPT_DIR/mongo.repo /etc/yum.repos.d/mongo.repo  &>>$LOGS_FILE
 VALIDATE $? "Copying the data of MongoDB"
 
-dnf install mongodb-mongosh -y
+dnf install mongodb-mongosh -y &>>$LOGS_FILE
 VALIDATE $? "Installing MongoDB"
 
-STATUS=$(mongosh --host 172.31.91.253 --eval 'db.getMongo().getDBNames().indexOf("catalogue")')
+STATUS=$(mongosh --host 172.31.91.253 --eval 'db.getMongo().getDBNames().indexOf("catalogue")')  &>>$LOGS_FILE
 if [ $STATUS -lt 0 ]
 then
     mongosh --host 172.31.91.253 </app/db/master-data.js &>>$LOG_FILE
