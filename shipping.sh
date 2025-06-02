@@ -73,17 +73,4 @@ VALIDATE $? "Start shipping"
 dnf install mysql -y  &>>$LOGS_FILE
 VALIDATE $? " Installing Mysql"
 
-mysql -h 172.31.45.192 -uroot -pRoboShop@1 < /app/db/schema.sql &>>$LOGS_FILE
-mysql -h 172.31.45.192 -uroot -pRoboShop@1 < /app/db/app-user.sql  &>>$LOGS_FILE
-mysql -h 172.31.45.192 -uroot -pRoboShop@1 < /app/db/master-data.sql &>>$LOGS_FILE
-VALIDATE $? "Loading data into MySQL"
-
-
-systemctl restart shipping &>>$LOGS_FILE
-VALIDATE $? "Restart shipping"
-
-END_TIME=$(date +%s)
-TOTAL_TIME=$(( $END_TIME - $START_TIME ))
-
-echo -e "Script exection completed successfully, $Y time taken: $TOTAL_TIME seconds $N" | tee -a $LOGS_FILE
 
