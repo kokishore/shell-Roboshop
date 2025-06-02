@@ -20,8 +20,6 @@ else
     echo "You are running with root access" | tee -a $LOG_FILE
 fi
 
-echo " Please enter Root Password to setup RABBITMQ "
-read -s RABBITMQ_PASSWORD
 
 # validate functions takes input as exit status, what command they tried to install
 VALIDATE(){
@@ -45,7 +43,7 @@ VALIDATE $? "Enabling RabbitMQ"
 systemctl start rabbitmq-server &>>$LOGS_FILE
 VALIDATE $? " Starting RabbitMQ"
 
-rabbitmqctl add_user roboshop $RABBITMQ_PASSWD &>>$LOG_FILE
+rabbitmqctl add_user roboshop roboshop123 &>>$LOG_FILE
 rabbitmqctl set_permissions -p / roboshop ".*" ".*" ".*" &>>$LOG_FILE
 
 END_TIME=$(date +%s)
