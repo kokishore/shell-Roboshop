@@ -1,5 +1,5 @@
 #!/bin/bash
-
+START_TIME=$(date +%s)
 USERID=$(id -u)
 R="\e[31m"
 G="\e[32m"
@@ -15,10 +15,10 @@ echo " Script is started execution at : $(date)" | tee -a $LOGS_FILE
 
 if [ $USERID -ne 0 ]
 then
-    echo -e "$R ERROR:: Please run this script with root access $N" | tee -a $LOG_FILE
+    echo -e "$R ERROR:: Please run this script with root access $N" | tee -a $LOGS_FILE
     exit 1 #give other than 0 upto 127
 else
-    echo "You are running with root access" | tee -a $LOG_FILE
+    echo "You are running with root access" | tee -a $LOGS_FILE
 fi
 
 echo " Please enter Root Password to setup MYSQL "
@@ -43,7 +43,7 @@ VALIDATE $? " Enabling MySQLD"
 systemctl start mysqld   &>>$LOGS_FILE
 VALIDATE $? "Starting MYSQLD"
 
-mysql_secure_installation --set-root-pass $MYSQL_ROOT_PASSWORD &>>$LOG_FILE
+mysql_secure_installation --set-root-pass $MYSQL_ROOT_PASSWORD &>>$LOGS_FILE
 VALIDATE $? "Setting MySQL root password"
 
 END_TIME=$(date +%s)
