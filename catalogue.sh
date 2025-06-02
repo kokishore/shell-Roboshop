@@ -80,7 +80,7 @@ VALIDATE $? "Copying the data of MongoDB"
 dnf install mongodb-mongosh -y &>>$LOGS_FILE
 VALIDATE $? "Installing MongoDB"
 
-STATUS=$(mongosh --host 172.31.91.253 --eval 'db.getMongo().getDBNames().indexOf("catalogue")')  &>>$LOGS_FILE
+STATUS=$(mongosh --host 172.31.38.208 --eval 'db.getMongo().getDBNames().indexOf("catalogue")')  &>>$LOGS_FILE
 if [ $STATUS -lt 0 ]
 then
     mongosh --host 172.31.91.253 </app/db/master-data.js &>>$LOG_FILE
