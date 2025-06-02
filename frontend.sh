@@ -7,12 +7,13 @@ Y="\e[33m"
 N="\e[0m"
 LOGS_FOLDER="/var/log/roboshop-logs"
 SCRIPT_NAME=$(echo $0 | cut -d "." -f1)
-LOGS_FILE=$LOGS_FOLDER/$SCRIPT_NAME.log
+LOG_FILE="$LOGS_FOLDER/$SCRIPT_NAME.log"
 SCRIPT_DIR=$PWD
 
 mkdir -p $LOGS_FOLDER
-echo " Script is started execution at : $(date)" | tee -a $LOGS_FILE
+echo "Script started executing at: $(date)" | tee -a $LOG_FILE
 
+# check the user has root priveleges or not
 if [ $USERID -ne 0 ]
 then
     echo -e "$R ERROR:: Please run this script with root access $N" | tee -a $LOG_FILE
@@ -32,32 +33,34 @@ VALIDATE(){
     fi
 }
 
-dnf module disable nginx -y  &>>$LOGS_FILE
-VALIDATE $? " Disabling the default  Nginx"
+dnf module disable nginx -y &>>$LOG_FILE
+VALIDATE $? "Disabling Default Nginx"
 
-dnf module enable nginx:1.24 -y &>>$LOGS_FILE
-VALIDATE $? "Enabling the Nginx 1.24"
+dnf module enable nginx:1.24 -y &>>$LOG_FILE
+VALIDATE $? "Enabling Nginx:1.24"
 
-dnf install nginx -y &>>$LOGS_FILE
-VALIDATE $? " Installing Nginx Web server "
+dnf install nginx -y &>>$LOG_FILE
+VALIDATE $? "Installing Nginx"
 
-systemctl enable nginx  &>>$LOGS_FILE
+systemctl enable nginx  &>>$LOG_FILE
 systemctl start nginx 
+VALIDATE $? "Starting Nginx"
 
-VALIDATE $? "Enabling and starting the Nginx"
+rm -rf /usr/share/nginx/html/* &>>$LOG_FILE
+VALIDATE $? "Removing default content"
 
-rm -rf /usr/share/nginx/html/*  &>>$LOGS_FILE
-VALIDATE $? "Removing the Default content"
-
-curl -o /tmp/frontend.zip https://roboshop-artifacts.s3.amazonaws.com/frontend-v3.zip  &>>$LOGS_FILE
-VALIDATE $? "Downloading the Frontend end code from S3 Bucket "
+curl -o /tmp/frontend.zip https://roboshop-artifacts.s3.amazonaws.com/frontend-v3.zip &>>$LOG_FILE
+VALIDATE $? "Downloading frontend"
 
 cd /usr/share/nginx/html 
-unzip /tmp/frontend.zip &>>$LOGS_FILE
-VALIDATE $? "Unzipping the Frontend content to the HTML folder"
+unzip /tmp/frontend.zip &>>$LOG_FILE
+VALIDATE $? "unzipping frontend"
 
-cp $SCRIPT_DIR/nginx.conf /etc/nginx/nginx.conf &>>$LOGS_FILE
+rm -rf /etc/nginx/nginx.conf &>>$LOG_FILE
+VALIDATE $? "Remove default nginx conf"
 
+cp $SCRIPT_DIR/nginx.conf /etc/nginx/nginx.conf
+VALIDATE $? "Copying nginx.conf"
 
-systemctl restart nginx  &>>$LOGS_FILE
-VALIDATE $? " Restarting the NGINX "
+systemctl restart nginx 
+VALIDATE $? "Restarting nginx"
