@@ -83,7 +83,7 @@ VALIDATE $? "Installing MongoDB"
 STATUS=$(mongosh --host 172.31.38.208 --eval 'db.getMongo().getDBNames().indexOf("catalogue")')  &>>$LOGS_FILE
 if [ $STATUS -lt 0 ]
 then
-    mongosh --host 172.31.91.253 </app/db/master-data.js &>>$LOG_FILE
+    mongosh --host 172.31.91.253 </app/db/master-data.js &>>$LOGS_FILE
     VALIDATE $? "Loading data into MongoDB"
 else
     echo -e "Data is already loaded ... $Y SKIPPING $N"
