@@ -76,22 +76,17 @@ VALIDATE $? "Start shipping"
 dnf install mysql -y  &>>$LOGS_FILE
 VALIDATE $? " Installing Mysql"
 
-mysql -h 172.31.45.192 -uroot -p$MYSQL_ROOT_PASSWORD -e 'use cities' &>>$LOGS_FILE
-if [ $? -ne 0 ]
-then
     mysql -h 172.31.45.192 -uroot -p$MYSQL_ROOT_PASSWORD < /app/db/schema.sql &>>$LOGS_FILE
     mysql -h 172.31.45.192 -uroot -p$MYSQL_ROOT_PASSWORD < /app/db/app-user.sql  &>>$LOGS_FILE
     mysql -h 172.31.45.192 -uroot -p$MYSQL_ROOT_PASSWORD < /app/db/master-data.sql &>>$LOGS_FILE
     VALIDATE $? "Loading data into MySQL"
-else
-    echo -e "Data is already loaded into MySQL ... $Y SKIPPING $N"
-fi
 
-systemctl restart shipping &>>$LOG_FILE
+
+systemctl restart shipping &>>$LOGS_FILE
 VALIDATE $? "Restart shipping"
 
 END_TIME=$(date +%s)
 TOTAL_TIME=$(( $END_TIME - $START_TIME ))
 
-echo -e "Script exection completed successfully, $Y time taken: $TOTAL_TIME seconds $N" | tee -a $LOG_FILE
+echo -e "Script exection completed successfully, $Y time taken: $TOTAL_TIME seconds $N" | tee -a $LOGS_FILE
 
