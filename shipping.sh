@@ -76,12 +76,12 @@ VALIDATE $? "Start shipping"
 dnf install mysql -y  &>>$LOGS_FILE
 VALIDATE $? " Installing Mysql"
 
-mysql -h mysql.daws84s.site -u root -p$MYSQL_ROOT_PASSWORD -e 'use cities' &>>$LOGS_FILE
+mysql -h 172.31.45.192 -u root -p$MYSQL_ROOT_PASSWORD -e 'use cities' &>>$LOGS_FILE
 if [ $? -ne 0 ]
 then
-    mysql -h mysql.daws84s.site -uroot -p$MYSQL_ROOT_PASSWORD < /app/db/schema.sql &>>$LOGS_FILE
-    mysql -h mysql.daws84s.site -uroot -p$MYSQL_ROOT_PASSWORD < /app/db/app-user.sql  &>>$LOGS_FILE
-    mysql -h mysql.daws84s.site -uroot -p$MYSQL_ROOT_PASSWORD < /app/db/master-data.sql &>>$LOGS_FILE
+    mysql -h 172.31.45.192 -uroot -p$MYSQL_ROOT_PASSWORD < /app/db/schema.sql &>>$LOGS_FILE
+    mysql -h 172.31.45.192 -uroot -p$MYSQL_ROOT_PASSWORD < /app/db/app-user.sql  &>>$LOGS_FILE
+    mysql -h 172.31.45.192 -uroot -p$MYSQL_ROOT_PASSWORD < /app/db/master-data.sql &>>$LOGS_FILE
     VALIDATE $? "Loading data into MySQL"
 else
     echo -e "Data is already loaded into MySQL ... $Y SKIPPING $N"
