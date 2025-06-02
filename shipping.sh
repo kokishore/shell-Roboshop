@@ -1,3 +1,6 @@
+
+#!/bin/bash
+
 START_TIME=$(date +%s)
 USERID=$(id -u)
 R="\e[31m"
@@ -6,12 +9,13 @@ Y="\e[33m"
 N="\e[0m"
 LOGS_FOLDER="/var/log/roboshop-logs"
 SCRIPT_NAME=$(echo $0 | cut -d "." -f1)
-LOGS_FILE=$LOGS_FOLDER/$SCRIPT_NAME.log
+LOG_FILE="$LOGS_FOLDER/$SCRIPT_NAME.log"
 SCRIPT_DIR=$PWD
 
 mkdir -p $LOGS_FOLDER
-echo " Script is started execution at : $(date)" | tee -a $LOGS_FILE
+echo "Script started executing at: $(date)" | tee -a $LOG_FILE
 
+# check the user has root priveleges or not
 if [ $USERID -ne 0 ]
 then
     echo -e "$R ERROR:: Please run this script with root access $N" | tee -a $LOG_FILE
@@ -19,6 +23,9 @@ then
 else
     echo "You are running with root access" | tee -a $LOG_FILE
 fi
+
+echo "Please enter root password to setup"
+read -s MYSQL_ROOT_PASSWORD
 
 # validate functions takes input as exit status, what command they tried to install
 VALIDATE(){
@@ -30,47 +37,65 @@ VALIDATE(){
         exit 1
     fi
 }
-dnf install maven -y &>>$LOGS_FILE
-VALIDATE $? " Installing Maven"
 
-id roboshop
+dnf install maven -y &>>$LOG_FILE
+VALIDATE $? "Installing Maven and Java"
+
+id roboshop &>>$LOG_FILE
 if [ $? -ne 0 ]
-then 
-    echo " Creating Roboshop User "
-    useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop &>>$LOGS_FILE
+then
+    useradd --system --home /app --shell /sbin/nologin --comment "roboshop system user" roboshop &>>$LOG_FILE
+    VALIDATE $? "Creating roboshop system user"
 else
-    echo " Roboshop user is already exists"
+    echo -e "System user roboshop already created ... $Y SKIPPING $N"
 fi
 
-rm -rf /app/*
 mkdir -p /app 
-VALIDATE $? "creating app directory"
+VALIDATE $? "Creating app directory"
 
-curl -L -o /tmp/shipping.zip https://roboshop-artifacts.s3.amazonaws.com/shipping-v3.zip  &>>$LOGS_FILE
-VALIDATE $? "Downloading the Shipping module"
+curl -o /tmp/shipping.zip https://roboshop-artifacts.s3.amazonaws.com/shipping-v3.zip &>>$LOG_FILE
+VALIDATE $? "Downloading shipping"
 
-cd /app  
-unzip /tmp/shipping.zip &>>$LOGS_FILE
-VALIDATE $? " Unzipping the shipping module "
+rm -rf /app/*
+cd /app 
+unzip /tmp/shipping.zip &>>$LOG_FILE
+VALIDATE $? "unzipping shipping"
 
+mvn clean package  &>>$LOG_FILE
+VALIDATE $? "Packaging the shipping application"
 
-mvn clean package  &>>$LOGS_FILE
-VALIDATE $? " Packing the application"
-mv target/shipping-1.0.jar shipping.jar  &>>$LOGS_FILE
-VALIDATE $? "moving the target file to shippingJAR file"
+mv target/shipping-1.0.jar shipping.jar  &>>$LOG_FILE
+VALIDATE $? "Moving and renaming Jar file"
 
-cp $SCRIPT_DIR/shipping.service /etc/systemd/system/shipping.service  &>>$LOGS_FILE
-VALIDATE $? "Copying the shipping service file "
+cp $SCRIPT_DIR/shipping.service /etc/systemd/system/shipping.service
 
-systemctl daemon-reload  &>>$LOGS_FILE
-VALIDATE $? "Daemon reloading"
+systemctl daemon-reload &>>$LOG_FILE
+VALIDATE $? "Daemon Realod"
 
-systemctl enable shipping  &>>$LOGS_FILE
-VALIDATE $? "Enabling shipping"
-systemctl start shipping  &>>$LOGS_FILE
-VALIDATE $? "Start shipping"
+systemctl enable shipping  &>>$LOG_FILE
+VALIDATE $? "Enabling Shipping"
 
-dnf install mysql -y  &>>$LOGS_FILE
-VALIDATE $? " Installing Mysql"
+systemctl start shipping &>>$LOG_FILE
+VALIDATE $? "Starting Shipping"
 
+dnf install mysql -y  &>>$LOG_FILE
+VALIDATE $? "Install MySQL"
 
+mysql -h 3.82.10.162 -u root -p$MYSQL_ROOT_PASSWORD -e 'use cities' &>>$LOG_FILE
+if [ $? -ne 0 ]
+then
+    mysql -h 3.82.10.162 -uroot -p$MYSQL_ROOT_PASSWORD < /app/db/schema.sql &>>$LOG_FILE
+    mysql -h 3.82.10.162 -uroot -p$MYSQL_ROOT_PASSWORD < /app/db/app-user.sql  &>>$LOG_FILE
+    mysql -h 3.82.10.162 -uroot -p$MYSQL_ROOT_PASSWORD < /app/db/master-data.sql &>>$LOG_FILE
+    VALIDATE $? "Loading data into MySQL"
+else
+    echo -e "Data is already loaded into MySQL ... $Y SKIPPING $N"
+fi
+
+systemctl restart shipping &>>$LOG_FILE
+VALIDATE $? "Restart shipping"
+
+END_TIME=$(date +%s)
+TOTAL_TIME=$(( $END_TIME - $START_TIME ))
+
+echo -e "Script exection completed successfully, $Y time taken: $TOTAL_TIME seconds $N" | tee -a $LOG_FILE
